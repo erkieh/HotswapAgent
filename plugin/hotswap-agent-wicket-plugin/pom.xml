@@ -29,16 +29,6 @@
 			<artifactId>junit</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.ow2.asm</groupId>
-			<artifactId>asm-all</artifactId>
-			<version>5.0.3</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.sun</groupId>
-			<artifactId>tools</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.wicket</groupId>
 			<artifactId>wicket-core</artifactId>
 			<version>${wicket.version}</version>
