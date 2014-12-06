@@ -16,7 +16,7 @@ import org.hotswap.agent.javassist.CtMethod;
  * Re-executes the static initializer method, if the length of it's body is changed. Note: All the initialization
  * expressions of static fields get compiled into the static initializer (<clinit>) block. If you change one
  * initializing method call to another, then the length won't change. If you add static field like "int t = 1" then the
- * length changes and it is re-executed.
+ * length changes and the method is re-executed.
  * 
  * @author Erki Ehtla
  * 
@@ -32,7 +32,7 @@ public class StaticInitPlugin {
 	private static Thread thread;
 	
 	/**
-	 * Start a static block exectuing thread
+	 * Start a static initializer executing thread
 	 */
 	private static void startThread() {
 		boolean createNewThread = false;
@@ -76,7 +76,7 @@ public class StaticInitPlugin {
 	}
 	
 	/**
-	 * If the moethod has a static initializer, then this method stores the length of the static initializer block
+	 * If the method has a static initializer, then this method stores the length of the static initializer block
 	 */
 	@OnClassLoadEvent(classNameRegexp = "(?!(java/|javax/|sun/|oracle/)).*", events = LoadEvent.DEFINE, skipAnonymous = false)
 	public static void transformDefinitions(final CtClass ct, String name, final ClassLoader loader) throws Exception {
