@@ -1,9 +1,6 @@
 package org.hotswap.agent.plugin.staticinit;
 
 import java.lang.reflect.Modifier;
-import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.hotswap.agent.annotation.LoadEvent;
 import org.hotswap.agent.annotation.OnClassLoadEvent;
@@ -26,9 +23,6 @@ public class StaticInitPlugin {
 	public static final String INIT_METHOD_NAME = "HOTSWAP_AGENT_CLINIT$$METHOD";
 	
 	private static final StaticInitWorkerLock threadLock = new StaticInitWorkerLock();
-	private static final ConcurrentLinkedQueue<StaticInitKeyValue> newCodes = new ConcurrentLinkedQueue<>();
-	private static final ConcurrentLinkedQueue<StaticInitKeyValue> executedCodes = new ConcurrentLinkedQueue<>();
-	private static final Map<StaticInitKey, Integer> executedCodeMap = new WeakHashMap<>();
 	private static Thread thread;
 	
 	/**
@@ -45,7 +39,7 @@ public class StaticInitPlugin {
 			}
 		}
 		if (createNewThread) {
-			thread = new StaticInitWorkerThread(executedCodes, newCodes, executedCodeMap, threadLock);
+			thread = new StaticInitWorkerThread(threadLock);
 			thread.start();
 		}
 	}
@@ -54,7 +48,7 @@ public class StaticInitPlugin {
 	 * If the moethod has a static initializer, then this method stores the length of the static initializer block and
 	 * creates a new method containing the static initializer code
 	 */
-	@OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE, skipAnonymous = false)
+	@OnClassLoadEvent(classNameRegexp = "(?!(java/|javax/|sun/|oracle/)).*", events = LoadEvent.REDEFINE, skipAnonymous = false)
 	public static CtClass transformRedefinitions(final CtClass ct, String name, final ClassLoader loader, Class<?> clazz)
 			throws Exception {
 		if (name.contains("$$") || name.startsWith("com/sun/proxy/$Proxy") || clazz.isSynthetic()) {
@@ -66,7 +60,7 @@ public class StaticInitPlugin {
 			initCode = getInitBlockCode(classInitializer);
 		}
 		if (initCode != null) {
-			newCodes.add(new StaticInitKeyValue(loader, name, clazz, initCode));
+			threadLock.newCodes.add(new StaticInitKeyValue(loader, name, clazz, initCode));
 			CtMethod method = classInitializer.toMethod(INIT_METHOD_NAME + initCode, ct);
 			method.setModifiers(Modifier.PUBLIC | Modifier.STATIC);
 			ct.addMethod(method);
@@ -89,7 +83,10 @@ public class StaticInitPlugin {
 			initCode = getInitBlockCode(classInitializer);
 		}
 		if (initCode != null) {
-			executedCodes.add(new StaticInitKeyValue(loader, name, initCode));
+			threadLock.executedCodes.add(new StaticInitKeyValue(loader, name, initCode));
+		}
+		if (!threadLock.classLoaderQueue.contains(loader)) {
+			threadLock.classLoaderQueue.add(loader);
 		}
 	}
 	

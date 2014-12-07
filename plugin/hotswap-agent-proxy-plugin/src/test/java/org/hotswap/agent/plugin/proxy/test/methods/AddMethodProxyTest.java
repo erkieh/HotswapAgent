@@ -33,7 +33,7 @@ public class AddMethodProxyTest {
 	}
 	
 	// Version 0
-	public static class AImpl implements A {
+	public static class AImpl extends BImpl implements A {
 		@Override
 		public int getValue1() {
 			return 1;
@@ -51,7 +51,7 @@ public class AddMethodProxyTest {
 	}
 	
 	// Version 0
-	public static class AImpl___0 implements A___0 {
+	public static class AImpl___0 extends BImpl___0 implements A___0 {
 		@Override
 		public int getValue1() {
 			return 1;
@@ -69,7 +69,7 @@ public class AddMethodProxyTest {
 	}
 	
 	// Version 1
-	public static class AImpl___1 implements A___1 {
+	public static class AImpl___1 extends BImpl___1 implements A___1 {
 		@Override
 		public int getValue2() {
 			return 2;
@@ -82,24 +82,60 @@ public class AddMethodProxyTest {
 	}
 	
 	// Version 0
-	public interface A {
+	public abstract static class BImpl implements B {
+		@Override
+		public int getValueB0() {
+			return 0;
+		}
+	}
+	
+	// Version 0
+	public abstract static class BImpl___0 implements B___0 {
+		@Override
+		public int getValueB0() {
+			return 0;
+		}
+	}
+	
+	// Version 1
+	public abstract static class BImpl___1 implements B___1 {
+		@Override
+		public int getValueB1() {
+			return 1;
+		}
+	}
+	
+	// Version 0
+	public interface A extends B {
 		public int getValue1();
 		
 		public int getValue3(Object[] o);
 	}
 	
 	// Version 0
-	public interface A___0 {
+	public interface A___0 extends B___0 {
 		public int getValue1();
 		
 		public int getValue3(Object[] o);
 	}
 	
 	// Version 1
-	public interface A___1 {
+	public interface A___1 extends B___1 {
 		public int getValue2();
 		
 		public int getValue33(Object[] o);
+	}
+	
+	public interface B {
+		public int getValueB0();
+	}
+	
+	public interface B___0 {
+		public int getValueB0();
+	}
+	
+	public interface B___1 {
+		public int getValueB1();
 	}
 	
 	@Before
@@ -116,11 +152,14 @@ public class AddMethodProxyTest {
 		final A a = new AImpl();
 		
 		assertEquals(1, a.getValue1());
+		assertEquals(0, a.getValueB0());
 		
 		__toVersion__Delayed(1);
 		
 		Method method = getMethod(a, "getValue2");
 		assertEquals(2, method.invoke(a, null));
+		Method method2 = getMethod(a, "getValueB0");
+		assertEquals(1, method2.invoke(a, null));
 	}
 	
 	@Test

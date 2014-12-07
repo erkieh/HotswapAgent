@@ -1,5 +1,7 @@
 package org.hotswap.agent.plugin.staticinit;
 
+import java.lang.ref.WeakReference;
+
 /**
  * if both instance have Class field initialized, then these are compared for equality. Otherwise ClassLoader and name
  * are used.
@@ -8,29 +10,35 @@ package org.hotswap.agent.plugin.staticinit;
  * 
  */
 public class StaticInitKey {
+	private WeakReference<ClassLoader> loader;
+	private String name;
+	private WeakReference<Class<?>> clazz;
+	private int hashCode;
 	
 	public StaticInitKey(ClassLoader loader, String name) {
-		this.loader = loader;
+		this.loader = new WeakReference<>(loader);
 		this.name = name;
+		this.hashCode = calculateHashCode(loader, name);
 	}
 	
 	public StaticInitKey(ClassLoader loader, String name, Class<?> clazz) {
-		this.clazz = clazz;
-		this.loader = loader;
+		this.clazz = new WeakReference<Class<?>>(clazz);
+		this.loader = new WeakReference<>(loader);
 		this.name = name;
+		this.hashCode = calculateHashCode(loader, name);
 	}
 	
-	private ClassLoader loader;
-	private String name;
-	private Class<?> clazz;
-	
-	@Override
-	public int hashCode() {
+	public int calculateHashCode(ClassLoader loader, String name) {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((loader == null) ? 0 : loader.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
+	}
+	
+	@Override
+	public int hashCode() {
+		return hashCode;
 	}
 	
 	@Override
@@ -41,8 +49,18 @@ public class StaticInitKey {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
+		
+		ClassLoader thisLoader;
+		Class<?> thisClazz;
+		if ((thisLoader = getLoader()) == null || (thisClazz = getClazz()) == null)
+			return false;
 		StaticInitKey other = (StaticInitKey) obj;
-		if (clazz == other.clazz || loader == other.loader
+		
+		ClassLoader otherLoader;
+		Class<?> otherClazz;
+		if ((otherLoader = other.getLoader()) == null || (otherClazz = other.getClazz()) == null)
+			return false;
+		if (thisClazz == otherClazz || thisLoader == otherLoader
 				&& (name == other.name || name != null && name.equals(other.name))) {
 			return true;
 		}
@@ -50,7 +68,7 @@ public class StaticInitKey {
 	}
 	
 	public ClassLoader getLoader() {
-		return loader;
+		return loader.get();
 	}
 	
 	public String getName() {
@@ -58,12 +76,12 @@ public class StaticInitKey {
 	}
 	
 	public Class<?> getClazz() {
-		return clazz;
+		return clazz.get();
 	}
 	
 	@Override
 	public String toString() {
-		return "StaticInitKey [loader=" + loader + ", name=" + name + ", clazz=" + clazz + "]";
+		return "StaticInitKey [loader=" + getLoader() + ", name=" + name + ", clazz=" + getClazz() + "]";
 	}
 	
 }
