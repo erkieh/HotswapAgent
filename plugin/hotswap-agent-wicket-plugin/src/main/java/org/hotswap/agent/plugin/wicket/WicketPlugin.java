@@ -29,11 +29,21 @@ public class WicketPlugin {
 	private static AgentLogger LOGGER = AgentLogger.getLogger(WicketPlugin.class);
 	private List<WeakReference<Object>> injectorClassMetaCaches = new ArrayList<>();
 	
-	@OnClassLoadEvent(classNameRegexp = "org.apache.wicket.Application")
+	/**
+	 * Transform SpringComponentInjector so the SpringComponentInjector used in the WebApplication is processed in this
+	 * plugin register method
+	 * 
+	 * @param ct
+	 * @return
+	 * @throws Exception
+	 */
+	@OnClassLoadEvent(classNameRegexp = "org.apache.wicket.spring.injection.annot.SpringComponentInjector")
 	public static CtClass initPlugin(final CtClass ct) throws Exception {
 		CtConstructor[] constructors = ct.getConstructors();
 		for (CtConstructor ctConstructor : constructors) {
-			ctConstructor.insertBeforeBody(PluginManagerInvoker.buildInitializePlugin(WicketPlugin.class));
+			ctConstructor.insertAfter(PluginManagerInvoker.buildInitializePlugin(WicketPlugin.class)
+					+ PluginManagerInvoker.buildCallPluginMethod(WicketPlugin.class, "register", "this",
+							"java.lang.Object"));
 		}
 		return ct;
 	}
@@ -50,24 +60,6 @@ public class WicketPlugin {
 	public CtClass interceptPageLoad(final CtClass ct) throws Exception {
 		CtMethod declaredMethod = ct.getDeclaredMethod("getPage", new CtClass[] { CtPrimitiveType.intType });
 		declaredMethod.insertAfter(WicketComponentInjector.class.getName() + ". inject($_);");
-		return ct;
-	}
-	
-	/**
-	 * Transform SpringComponentInjector so the SpringComponentInjector used in the WebApplication is processed in this
-	 * plugin register method
-	 * 
-	 * @param ct
-	 * @return
-	 * @throws Exception
-	 */
-	@OnClassLoadEvent(classNameRegexp = "org.apache.wicket.spring.injection.annot.SpringComponentInjector")
-	public CtClass recordSpringComponentInjector(final CtClass ct) throws Exception {
-		CtConstructor[] constructors = ct.getConstructors();
-		for (CtConstructor ctConstructor : constructors) {
-			ctConstructor.insertAfter(PluginManagerInvoker.buildCallPluginMethod(WicketPlugin.class, "register",
-					"this", "java.lang.Object"));
-		}
 		return ct;
 	}
 	
