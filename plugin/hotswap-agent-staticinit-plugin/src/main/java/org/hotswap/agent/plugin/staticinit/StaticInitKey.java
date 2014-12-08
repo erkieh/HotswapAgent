@@ -50,16 +50,16 @@ public class StaticInitKey {
 		if (getClass() != obj.getClass())
 			return false;
 		
-		ClassLoader thisLoader;
-		Class<?> thisClazz;
-		if ((thisLoader = getLoader()) == null || (thisClazz = getClazz()) == null)
+		ClassLoader thisLoader = getLoader();
+		if (thisLoader == null)
 			return false;
+		Class<?> thisClazz = getClazz();
 		StaticInitKey other = (StaticInitKey) obj;
 		
 		ClassLoader otherLoader;
-		Class<?> otherClazz;
-		if ((otherLoader = other.getLoader()) == null || (otherClazz = other.getClazz()) == null)
+		if ((otherLoader = other.getLoader()) == null)
 			return false;
+		Class<?> otherClazz = other.getClazz();
 		if (thisClazz == otherClazz || thisLoader == otherLoader
 				&& (name == other.name || name != null && name.equals(other.name))) {
 			return true;

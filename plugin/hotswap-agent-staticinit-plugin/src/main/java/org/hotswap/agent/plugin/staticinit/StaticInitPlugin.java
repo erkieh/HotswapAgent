@@ -59,12 +59,24 @@ public class StaticInitPlugin {
 		if (classInitializer != null) {
 			initCode = getInitBlockCode(classInitializer);
 		}
+		
 		if (initCode != null) {
-			threadLock.newCodes.add(new StaticInitKeyValue(loader, name, clazz, initCode));
-			CtMethod method = classInitializer.toMethod(INIT_METHOD_NAME + initCode, ct);
-			method.setModifiers(Modifier.PUBLIC | Modifier.STATIC);
-			ct.addMethod(method);
-			startThread();
+			String methodName = INIT_METHOD_NAME + initCode;
+			CtMethod[] declaredMethods = ct.getDeclaredMethods();
+			boolean hasmethod = false;
+			for (CtMethod ctMethod : declaredMethods) {
+				if (ctMethod.getName().equals(methodName)) {
+					hasmethod = true;
+					break;
+				}
+			}
+			if (!hasmethod) {
+				threadLock.newCodes.add(new StaticInitKeyValue(loader, name, clazz, initCode));
+				CtMethod method = classInitializer.toMethod(methodName, ct);
+				method.setModifiers(Modifier.PUBLIC | Modifier.STATIC);
+				ct.addMethod(method);
+				startThread();
+			}
 		}
 		return ct;
 	}
