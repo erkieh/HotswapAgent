@@ -46,6 +46,7 @@ import org.hotswap.agent.javassist.CtMethod;
 import org.hotswap.agent.javassist.CtPrimitiveType;
 import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.javassist.bytecode.Descriptor;
+import org.hotswap.agent.logging.AgentLogger;
 
 /**
  * ProxyGenerator contains the code to generate a dynamic proxy class for the java.lang.reflect.Proxy API.
@@ -61,6 +62,7 @@ import org.hotswap.agent.javassist.bytecode.Descriptor;
  * @author Erki Ehtla
  */
 public class CtClassJavaProxyGenerator {
+	private static AgentLogger LOGGER = AgentLogger.getLogger(CtClassJavaProxyGenerator.class);
 	/*
 	 * In the comments below, "JVMS" refers to The Java Virtual Machine Specification Second Edition and "JLS" refers to
 	 * the original version of The Java Language Specification, unless otherwise specified.
@@ -458,7 +460,7 @@ public class CtClassJavaProxyGenerator {
 			try {
 				addInterfacesWithSuperInterfaces(iWithSuper, intf.getInterfaces());
 			} catch (NotFoundException e) {
-				e.printStackTrace();
+				LOGGER.error("Could not find interface", e);
 			}
 		}
 	}
